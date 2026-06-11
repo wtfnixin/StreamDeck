@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -24,11 +25,14 @@ class _SplashPageState extends State<SplashPage> {
   @override     
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
           context.go('/dashboard');
         } else if (state is AuthUnauthenticated || state is AuthFailure) {
-          context.go('/pairing');
+          await Permission.camera.request();
+          if (context.mounted) {
+            context.go('/pairing');
+          }
         }
       },
       child: const Scaffold(
