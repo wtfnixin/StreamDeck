@@ -83,7 +83,8 @@ You can package the Node.js agent into a single binary that doesn't require Node
 
 ### 2. Build the Android Client (APK)
 1. Ensure your local PC has the [Android SDK](https://developer.android.com/studio) installed.
-2. Compile the release build:
+2. Ensure the ProGuard configuration (`android/app/proguard-rules.pro`) is present to prevent the R8 shrinker from removing CameraX and Google ML Kit modules during optimization.
+3. Compile the release build:
    ```bash
    flutter build apk --release
    ```
