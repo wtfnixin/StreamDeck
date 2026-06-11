@@ -633,7 +633,6 @@ class ConnectionStatusCard extends StatelessWidget {
     );
   }
 }
-
 class ClipboardStatusCard extends StatelessWidget {
   const ClipboardStatusCard({super.key});
 
@@ -641,43 +640,32 @@ class ClipboardStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ClipboardBloc, ClipboardState>(
       builder: (context, state) {
-        String text = 'No content synced yet';
-        String subtitle = 'Copy text on your PC to see it here';
-        IconData icon = Icons.content_copy_rounded;
-        Color accentColor = AppTheme.textSecondary.withOpacity(0.5);
-        bool showCopyButton = false;
+        String pcText = 'No content synced yet';
+        String phoneText = 'No content copied yet';
+        bool isSyncStopped = state is ClipboardSyncStopped;
+        bool hasPcData = false;
+        bool hasPhoneData = false;
 
         if (state is ClipboardSyncing) {
-          if (state.lastSyncedContent != null && state.lastSyncedContent!.isNotEmpty) {
-            text = state.lastSyncedContent!;
-            showCopyButton = true;
-            if (state.lastSyncSource == 'remote') {
-              subtitle = 'Teleported from PC';
-              icon = Icons.terminal_rounded;
-              accentColor = AppTheme.secondaryColor;
-            } else {
-              subtitle = 'Teleported to PC';
-              icon = Icons.send_rounded;
-              accentColor = AppTheme.primaryColor;
-            }
-          } else {
-            subtitle = 'Telemetry sync active';
-            accentColor = AppTheme.primaryColor;
+          if (state.lastPcContent != null && state.lastPcContent!.isNotEmpty) {
+            pcText = state.lastPcContent!;
+            hasPcData = true;
           }
-        } else if (state is ClipboardSyncStopped) {
-          subtitle = 'Clipboard Sync Disabled';
-          accentColor = Colors.redAccent.withOpacity(0.5);
+          if (state.lastPhoneContent != null && state.lastPhoneContent!.isNotEmpty) {
+            phoneText = state.lastPhoneContent!;
+            hasPhoneData = true;
+          }
         }
 
         return Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFF13151B), // Terminal black box
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Terminal Title bar
               Row(
@@ -689,15 +677,15 @@ class ClipboardStatusCard extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: accentColor,
+                          color: isSyncStopped ? Colors.redAccent : const Color(0xFF38BDF8),
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        'CLIPBOARD TELEMETRY FEED',
+                        'CLIPBOARD TRANSCEIVER',
                         style: TextStyle(
-                          color: Colors.white30,
+                          color: Colors.white38,
                           fontFamily: 'monospace',
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -707,9 +695,9 @@ class ClipboardStatusCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    subtitle.toUpperCase(),
+                    isSyncStopped ? 'SYNC DISABLED' : 'SYNC ACTIVE',
                     style: TextStyle(
-                      color: accentColor.withOpacity(0.8),
+                      color: isSyncStopped ? Colors.redAccent.withOpacity(0.8) : const Color(0xFF38BDF8).withOpacity(0.8),
                       fontFamily: 'monospace',
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -717,67 +705,153 @@ class ClipboardStatusCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              // Code terminal content area
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        text,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          color: Color(0xFFE2E8F0),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (showCopyButton) ...[
-                    const SizedBox(width: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withOpacity(0.06)),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.copy_all_rounded, color: Color(0xFF38BDF8), size: 20),
-                        tooltip: 'Copy to Clipboard',
-                        onPressed: () async {
-                          HapticFeedback.lightImpact();
-                          await Clipboard.setData(ClipboardData(text: text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: const Color(0xFF13151B),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(color: const Color(0xFF38BDF8).withOpacity(0.2)),
-                              ),
-                              content: const Text(
-                                'Copied to local clipboard',
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ],
+              const SizedBox(height: 16),
+
+              // SECTION 1: PC Clipboard (Incoming)
+              _buildClipboardSection(
+                context,
+                title: 'RECEIVED FROM PC',
+                content: pcText,
+                icon: Icons.desktop_windows_rounded,
+                accentColor: const Color(0xFF10B981), // Emerald green
+                onCopy: () => _copyToClipboard(context, pcText, 'Copied PC text to phone'),
+                showActions: !isSyncStopped && hasPcData,
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0),
+                child: Divider(color: Colors.white10, height: 1),
+              ),
+
+              // SECTION 2: Phone Clipboard (Outgoing)
+              _buildClipboardSection(
+                context,
+                title: 'COPIED FROM PHONE',
+                content: phoneText,
+                icon: Icons.phone_android_rounded,
+                accentColor: const Color(0xFF6366F1), // Indigo
+                onCopy: () => _copyToClipboard(context, phoneText, 'Copied phone text'),
+                showActions: !isSyncStopped && hasPhoneData,
+                isOutgoing: true,
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _copyToClipboard(BuildContext context, String text, String message) async {
+    HapticFeedback.lightImpact();
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF13151B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: const Color(0xFF38BDF8).withOpacity(0.2)),
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Widget _buildClipboardSection(
+    BuildContext context, {
+    required String title,
+    required String content,
+    required IconData icon,
+    required Color accentColor,
+    required VoidCallback onCopy,
+    required bool showActions,
+    bool isOutgoing = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: accentColor),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                color: accentColor.withOpacity(0.8),
+                fontFamily: 'monospace',
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            if (showActions && isOutgoing)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'SYNCED TO PC',
+                  style: TextStyle(
+                    color: Color(0xFF818CF8),
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                constraints: const BoxConstraints(maxHeight: 120),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.02)),
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    content,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: Color(0xFFCBD5E1),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (showActions) ...[
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: IconButton(
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.copy_all_rounded, color: accentColor, size: 18),
+                  tooltip: 'Copy text',
+                  onPressed: onCopy,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }

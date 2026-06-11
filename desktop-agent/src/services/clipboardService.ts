@@ -1,4 +1,4 @@
-import ncp from 'copy-paste';
+import { exec, spawn } from 'child_process';
 import { logger } from '../core/logger/winston';
 import { Server } from 'socket.io';
 
@@ -9,7 +9,7 @@ export class ClipboardService {
 
   public static init(io: Server): void {
     this.ioServer = io;
-    ncp.paste((error, content) => {
+    this.paste((error, content) => {
       if (error) {
         logger.warn('Failed to initialize clipboard content:', error);
         this.lastContent = '';
@@ -20,14 +20,53 @@ export class ClipboardService {
     });
   }
 
+  private static paste(callback: (error: any, content: string) => void): void {
+    // Run PowerShell to get clipboard with UTF-8 encoding to prevent garbled characters
+    const cmd = `powershell.exe -NoProfile -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard"`;
+    exec(cmd, { encoding: 'utf8' }, (error, stdout, stderr) => {
+      if (error) {
+        callback(error, '');
+      } else {
+        // Strip trailing newlines/carriage returns that powershell may append
+        const content = stdout.replace(/\r\n$/, '').replace(/\n$/, '');
+        callback(null, content);
+      }
+    });
+  }
+
+  private static copy(content: string, callback: (error: any) => void): void {
+    // Run PowerShell to set clipboard with UTF-8 encoding
+    const child = spawn('powershell.exe', [
+      '-NoProfile',
+      '-Command',
+      '[Console]::InputEncoding = [System.Text.Encoding]::UTF8; $content = [Console]::In.ReadToEnd(); Set-Clipboard -Value $content'
+    ]);
+
+    let err = '';
+    child.stderr.on('data', (data) => {
+      err += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        callback(new Error(err || `Exit code ${code}`));
+      } else {
+        callback(null);
+      }
+    });
+
+    child.stdin.write(content);
+    child.stdin.end();
+  }
+
   public static startPolling(): void {
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
     }
 
     this.pollInterval = setInterval(() => {
-      ncp.paste((error, currentContent) => {
-        if (error || !currentContent) return;
+      this.paste((error, currentContent) => {
+        if (error) return;
 
         if (currentContent !== this.lastContent && currentContent.trim() !== '') {
           this.lastContent = currentContent;
@@ -50,7 +89,7 @@ export class ClipboardService {
     if (content === this.lastContent) return;
     
     this.lastContent = content;
-    ncp.copy(content, (error) => {
+    this.copy(content, (error) => {
       if (error) {
         logger.error('Failed to write clipboard to system:', error);
       } else {

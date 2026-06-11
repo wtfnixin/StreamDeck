@@ -10,13 +10,13 @@ abstract class ClipboardState extends Equatable {
 class ClipboardInitial extends ClipboardState {}
 
 class ClipboardSyncing extends ClipboardState {
-  final String? lastSyncedContent;
-  final String? lastSyncSource; // 'local' or 'remote'
+  final String? lastPcContent;
+  final String? lastPhoneContent;
 
-  const ClipboardSyncing({this.lastSyncedContent, this.lastSyncSource});
+  const ClipboardSyncing({this.lastPcContent, this.lastPhoneContent});
 
   @override
-  List<Object?> get props => [lastSyncedContent, lastSyncSource];
+  List<Object?> get props => [lastPcContent, lastPhoneContent];
 }
 
 class ClipboardSyncStopped extends ClipboardState {}
