@@ -47,16 +47,24 @@ class _PairingPageState extends State<PairingPage> with SingleTickerProviderStat
     });
     final status = await Permission.camera.status;
     if (status.isGranted) {
-      setState(() {
-        _hasCameraPermission = true;
-        _isCheckingPermission = false;
-      });
+      if (mounted) {
+        setState(() {
+          _hasCameraPermission = true;
+          _isCheckingPermission = false;
+        });
+      }
     } else {
       final result = await Permission.camera.request();
-      setState(() {
-        _hasCameraPermission = result.isGranted;
-        _isCheckingPermission = false;
-      });
+      if (result.isGranted) {
+        // Wait 600ms to allow the Android OS to register permission logs and release hardware locks
+        await Future.delayed(const Duration(milliseconds: 600));
+      }
+      if (mounted) {
+        setState(() {
+          _hasCameraPermission = result.isGranted;
+          _isCheckingPermission = false;
+        });
+      }
     }
   }
 
@@ -239,6 +247,7 @@ class _PairingPageState extends State<PairingPage> with SingleTickerProviderStat
               ),
               clipBehavior: Clip.antiAlias,
               child: MobileScanner(
+                key: UniqueKey(),
                 onDetect: _onQRScanned,
                 errorBuilder: (context, error, child) {
                   return Container(
