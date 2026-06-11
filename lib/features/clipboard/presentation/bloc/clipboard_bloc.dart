@@ -12,6 +12,8 @@ class ClipboardBloc extends Bloc<ClipboardEvent, ClipboardState> {
   final SecureStorage _secureStorage;
   Timer? _pollingTimer;
   String _lastContent = '';
+  String? _lastPcContent;
+  String? _lastPhoneContent;
   bool _isListeningSocket = false;
 
   ClipboardBloc(this._socketService, this._secureStorage) : super(ClipboardInitial()) {
@@ -27,7 +29,7 @@ class ClipboardBloc extends Bloc<ClipboardEvent, ClipboardState> {
       emit(ClipboardSyncStopped());
       return;
     }
-    emit(const ClipboardSyncing(lastSyncedContent: null, lastSyncSource: null));
+    emit(ClipboardSyncing(lastPcContent: _lastPcContent, lastPhoneContent: _lastPhoneContent));
 
     // Listen to remote changes
     if (!_isListeningSocket) {
@@ -72,10 +74,11 @@ class ClipboardBloc extends Bloc<ClipboardEvent, ClipboardState> {
     AppLogger.info('📋 Local clipboard change detected, syncing to PC: "${event.content.substring(0, event.content.length > 20 ? 20 : event.content.length)}..."');
     
     _socketService.emit('clipboard:sync', {'content': event.content});
+    _lastPhoneContent = event.content;
     
     emit(ClipboardSyncing(
-      lastSyncedContent: event.content,
-      lastSyncSource: 'local',
+      lastPcContent: _lastPcContent,
+      lastPhoneContent: _lastPhoneContent,
     ));
   }
 
@@ -84,6 +87,7 @@ class ClipboardBloc extends Bloc<ClipboardEvent, ClipboardState> {
 
     AppLogger.info('📋 Received remote clipboard from PC: "${event.content.substring(0, event.content.length > 20 ? 20 : event.content.length)}..."');
     _lastContent = event.content;
+    _lastPcContent = event.content;
 
     try {
       await Clipboard.setData(ClipboardData(text: event.content));
@@ -92,8 +96,8 @@ class ClipboardBloc extends Bloc<ClipboardEvent, ClipboardState> {
     }
 
     emit(ClipboardSyncing(
-      lastSyncedContent: event.content,
-      lastSyncSource: 'remote',
+      lastPcContent: _lastPcContent,
+      lastPhoneContent: _lastPhoneContent,
     ));
   }
 
