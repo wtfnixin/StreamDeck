@@ -17,6 +17,7 @@ class PairingPage extends StatefulWidget {
 
 class _PairingPageState extends State<PairingPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late MobileScannerController _scannerController;
   final _formKey = GlobalKey<FormState>();
   
   final _hostController = TextEditingController();
@@ -27,11 +28,16 @@ class _PairingPageState extends State<PairingPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      facing: CameraFacing.back,
+    );
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scannerController.dispose();
     _hostController.dispose();
     _portController.dispose();
     _tokenController.dispose();
@@ -164,6 +170,7 @@ class _PairingPageState extends State<PairingPage> with SingleTickerProviderStat
               ),
               clipBehavior: Clip.antiAlias,
               child: MobileScanner(
+                controller: _scannerController,
                 onDetect: _onQRScanned,
               ),
             ),
