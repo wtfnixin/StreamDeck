@@ -172,6 +172,47 @@ class _PairingPageState extends State<PairingPage> with SingleTickerProviderStat
               child: MobileScanner(
                 controller: _scannerController,
                 onDetect: _onQRScanned,
+                errorBuilder: (context, error, child) {
+                  return Container(
+                    color: Colors.black87,
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.videocam_off, color: Colors.redAccent, size: 40),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Camera Initialization Failed',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            error.errorCode == MobileScannerErrorCode.permissionDenied
+                                ? 'Please grant camera permission in your phone settings.'
+                                : 'Error: ${error.errorDetails?.message ?? error.errorCode.toString()}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                          if (error.errorCode == MobileScannerErrorCode.permissionDenied) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              onPressed: () {
+                                _scannerController.start();
+                              },
+                              icon: const Icon(Icons.refresh, size: 16),
+                              label: const Text('Try Again', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
