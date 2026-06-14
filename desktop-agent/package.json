@@ -13,10 +13,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "build:exe": "node build-exe.js"
   },
   "dependencies": {
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^12.10.1",
     "copy-paste": "^2.2.0",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^9.0.2",
