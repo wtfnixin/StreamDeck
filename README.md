@@ -1,6 +1,16 @@
 # DevDeck
 
+[GitHub release (latest by date)](https://github.com/wtfnixin/StreamDeck/releases/latest)
+
 DevDeck is a customizable, open-source productivity remote control suite (similar to Elgato Stream Deck). It allows developers and power users to control their PC, trigger complex workspace workflows, sync clipboard history in real-time, launch apps/websites, and control their desktop remotely using a mobile app, browser tab, or second device.
+
+### 📥 Downloads
+
+| Platform | Download Link | File |
+| :--- | :--- | :--- |
+| **Android Client** | [Download APK](https://github.com/wtfnixin/StreamDeck/releases/latest/download/app-release.apk) | `app-release.apk` |
+| **Windows Desktop Agent (Installer)** | [Download Setup](https://github.com/wtfnixin/StreamDeck/releases/latest/download/DevDeckAgentSetup.exe) | `DevDeckAgentSetup.exe` |
+| **Windows Desktop Agent (Standalone)** | [Download Executable](https://github.com/wtfnixin/StreamDeck/releases/latest/download/devdeck-agent.exe) | `devdeck-agent.exe` |
 
 ---
 

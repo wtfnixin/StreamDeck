@@ -1,0 +1,126 @@
+name: CI/CD Build & Auto-Release
+
+on:
+  push:
+    branches:
+      - main
+      - version-1
+    tags:
+      - 'v*' # Triggers on release tags like v1.0.0
+
+jobs:
+  # Job 1: Build the Flutter Android Client
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter Dependencies
+        run: flutter pub get
+
+      - name: Run Flutter Analyzer (Linter)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run Flutter Tests
+        run: flutter test
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devdeck-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # Job 2: Build the Windows Desktop Agent
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: desktop-agent/package-lock.json
+
+      - name: Install Agent Dependencies
+        working-directory: desktop-agent
+        run: npm ci
+
+      - name: Compile TypeScript Agent
+        working-directory: desktop-agent
+        run: npm run build
+
+      - name: Compile Standalone Executable
+        working-directory: desktop-agent
+        run: npx @yao-pkg/pkg . --targets node22-win-x64 --output build/devdeck-agent.exe
+
+      - name: Compile Setup Installer (Inno Setup)
+        run: iscc desktop-agent/installer.iss
+
+      - name: Upload Windows Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: devdeck-windows-agent
+          path: |
+            desktop-agent/build/devdeck-agent.exe
+            desktop-agent/build/DevDeckAgentSetup.exe
+
+  # Job 3: Create GitHub Release and Upload Binaries
+  create-release:
+    needs: [build-android, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: devdeck-android-apk
+          path: ./release-assets
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: devdeck-windows-agent
+          path: ./release-assets
+
+      - name: Generate Automatic Release Tag
+        id: tag
+        run: |
+          echo "tag_name=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "release_title=Release v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: ${{ steps.tag.outputs.release_title }}
+          draft: false
+          prerelease: false
+          files: |
+            ./release-assets/app-release.apk
+            ./release-assets/devdeck-agent.exe
+            ./release-assets/DevDeckAgentSetup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
