@@ -30,7 +30,7 @@ export class AppRegistryService {
     return exePath;
   }
 
-  private static extractExeIcon(exePath: string): string | null {
+  public static extractExeIcon(exePath: string): string | null {
     try {
       const resolved = this.resolveExePath(exePath);
       if (!fs.existsSync(resolved)) {

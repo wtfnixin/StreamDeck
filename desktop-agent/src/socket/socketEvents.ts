@@ -6,6 +6,7 @@ import { AppRegistryService } from '../services/appRegistryService';
 import { WebsiteRegistryService } from '../services/websiteRegistryService';
 import { ClipboardService } from '../services/clipboardService';
 import { WorkspaceService } from '../services/workspaceService';
+import { AppDiscoveryService } from '../services/appDiscoveryService';
 import { pairingRequestSchema } from '../core/validation/zodSchemas';
 import { appEvents, EVENTS } from '../core/events/eventEmitter';
 import { db } from '../core/database/connection';
@@ -79,6 +80,36 @@ export function registerSocketEvents(io: Server, socket: Socket): void {
         io.emit('launcher:apps:updated', { apps: AppRegistryService.getAllApps() });
       } catch (error: any) {
         logger.error('Failed to handle launcher:register-app event:', error);
+        if (callback) callback({ success: false, error: error.message });
+      }
+    });
+
+    // Launcher: Scan running and installed apps on PC
+    socket.on('launcher:scan-system-apps', async (callback?: (res: any) => void) => {
+      try {
+        const [running, installed] = await Promise.all([
+          AppDiscoveryService.getRunningApps(),
+          AppDiscoveryService.getInstalledApps()
+        ]);
+        const res = { success: true, running, installed };
+        if (callback) callback(res);
+      } catch (error: any) {
+        logger.error('Failed to scan system apps:', error);
+        if (callback) callback({ success: false, error: error.message });
+      }
+    });
+
+    // Launcher: Extract icon for discovered installed app on demand
+    socket.on('launcher:extract-discovered-icon', (payload: { path: string }, callback?: (res: any) => void) => {
+      try {
+        if (!payload || !payload.path) {
+          throw new Error('Missing application path');
+        }
+        const icon = AppRegistryService.extractExeIcon(payload.path);
+        const res = { success: true, icon };
+        if (callback) callback(res);
+      } catch (error: any) {
+        logger.error('Failed to extract discovered icon:', error);
         if (callback) callback({ success: false, error: error.message });
       }
     });
