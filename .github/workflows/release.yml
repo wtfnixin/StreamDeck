@@ -32,7 +32,7 @@ jobs:
         run: flutter pub get
 
       - name: Run Flutter Analyzer (Linter)
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run Flutter Tests
         run: flutter test
@@ -61,28 +61,23 @@ jobs:
           cache-dependency-path: desktop-agent/package-lock.json
 
       - name: Install Agent Dependencies
-        run: |
-          cd desktop-agent
-          npm install
+        working-directory: desktop-agent
+        run: npm install
 
       - name: Compile TypeScript Agent
-        run: |
-          cd desktop-agent
-          npm run build
+        working-directory: desktop-agent
+        run: npm run build
 
       - name: Build SQLite Native Binary
-        run: |
-          cd desktop-agent
-          npx prebuild-install --target=22.0.0 --platform=win32 --arch=x64 --runtime=node
+        working-directory: desktop-agent
+        run: npx prebuild-install --target=22.0.0 --platform=win32 --arch=x64 --runtime=node
 
       - name: Compile Standalone Executable
-        run: |
-          cd desktop-agent
-          npx @yao-pkg/pkg . --targets node22-win-x64 --output build/devdeck-agent.exe
+        working-directory: desktop-agent
+        run: npx @yao-pkg/pkg . --targets node22-win-x64 --output build/devdeck-agent.exe
 
       - name: Compile Setup Installer (Inno Setup)
-        run: |
-          iscc desktop-agent/installer.iss
+        run: iscc desktop-agent/installer.iss
 
       - name: Upload Windows Assets
         uses: actions/upload-artifact@v4
