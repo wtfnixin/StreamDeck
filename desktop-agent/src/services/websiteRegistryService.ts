@@ -3,6 +3,7 @@ import { logger } from '../core/logger/winston';
 import { WebsiteShortcut } from '../types/launcher';
 import { openUrl } from '../utils/open';
 import crypto from 'crypto';
+import { exec } from 'child_process';
 
 export class WebsiteRegistryService {
   public static getAllWebsites(): WebsiteShortcut[] {
@@ -62,17 +63,37 @@ export class WebsiteRegistryService {
   public static launchWebsite(id: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        const row = db.prepare('SELECT url FROM websites WHERE id = ?').get(id) as { url: string } | undefined;
+        const row = db.prepare('SELECT name, url FROM websites WHERE id = ?').get(id) as { name: string, url: string } | undefined;
         if (!row) {
           logger.warn(`Attempted to launch website with unknown ID: ${id}`);
           return reject(new Error('Website not found in registry'));
         }
 
+        const name = row.name;
         const url = row.url;
-        logger.info(`Opening website URL: ${url}`);
-        
-        await openUrl(url);
-        resolve();
+
+        logger.info(`Attempting window activation for website: ${name}`);
+
+        // Escape single quotes for PowerShell string literal
+        const escapedName = name.replace(/'/g, "''");
+
+        const psCommand = `$wshell = New-Object -ComObject WScript.Shell; if ($wshell.AppActivate('${escapedName}')) { echo "SUCCESS" } else { echo "FAIL" }`;
+        const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`;
+
+        exec(fullCmd, async (error, stdout) => {
+          if (!error && stdout && stdout.trim() === 'SUCCESS') {
+            logger.info(`Focused existing browser window for website: ${name}`);
+            return resolve();
+          }
+
+          logger.info(`Website window not found or couldn't focus. Opening URL in browser: ${url}`);
+          try {
+            await openUrl(url);
+            resolve();
+          } catch (openError) {
+            reject(openError);
+          }
+        });
       } catch (error) {
         logger.error(`Exception during opening website ID ${id}:`, error);
         reject(error);

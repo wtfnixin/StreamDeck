@@ -141,28 +141,44 @@ export class AppRegistryService {
   public static launchApp(id: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const row = db.prepare('SELECT executable_path FROM apps WHERE id = ?').get(id) as { executable_path: string } | undefined;
+        const row = db.prepare('SELECT name, executable_path FROM apps WHERE id = ?').get(id) as { name: string, executable_path: string } | undefined;
         if (!row) {
           logger.warn(`Attempted to launch app with unknown ID: ${id}`);
           return reject(new Error('App not found in registry'));
         }
 
+        const name = row.name;
         const execPath = row.executable_path;
-        logger.info(`Starting execution of app path: ${execPath}`);
         
-        // Use double quotes for paths with spaces if necessary
-        const command = execPath.includes(' ') && !execPath.startsWith('"') ? `"${execPath}"` : execPath;
+        // Extract executable filename without path and extension
+        const execFilename = path.basename(execPath, path.extname(execPath));
 
-        exec(command, (error) => {
-          if (error) {
-            logger.error(`Error executing app ${execPath}:`, error);
-            // Some apps close immediately or fork, but if it's a launch error we want to know
-            return reject(error);
+        logger.info(`Attempting window activation for: ${name} / ${execFilename}`);
+
+        // Escape single quotes for PowerShell string literal
+        const escapedName = name.replace(/'/g, "''");
+        const escapedFilename = execFilename.replace(/'/g, "''");
+
+        const psCommand = `$wshell = New-Object -ComObject WScript.Shell; if ($wshell.AppActivate('${escapedName}') -or $wshell.AppActivate('${escapedFilename}')) { echo "SUCCESS" } else { echo "FAIL" }`;
+        const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`;
+
+        exec(fullCmd, (error, stdout) => {
+          if (!error && stdout && stdout.trim() === 'SUCCESS') {
+            logger.info(`Focused existing window for app: ${name}`);
+            return resolve();
           }
+
+          logger.info(`App window not found or couldn't focus. Launching new instance: ${execPath}`);
+          const command = execPath.includes(' ') && !execPath.startsWith('"') ? `"${execPath}"` : execPath;
+
+          exec(command, (launchError) => {
+            if (launchError) {
+              logger.error(`Error executing app ${execPath}:`, launchError);
+              return reject(launchError);
+            }
+          });
+          resolve();
         });
-        
-        // Resolve immediately as we only want to trigger the launch, not wait for the app to close
-        resolve();
       } catch (error) {
         logger.error(`Exception during launching app ID ${id}:`, error);
         reject(error);
