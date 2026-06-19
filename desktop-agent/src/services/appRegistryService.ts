@@ -5,6 +5,7 @@ import { exec, execSync } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { WindowManager } from '../utils/windowManager';
 
 export class AppRegistryService {
   private static resolveExePath(exePath: string): string {
@@ -139,7 +140,7 @@ export class AppRegistryService {
   }
 
   public static launchApp(id: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const row = db.prepare('SELECT name, executable_path FROM apps WHERE id = ?').get(id) as { name: string, executable_path: string } | undefined;
         if (!row) {
@@ -149,36 +150,27 @@ export class AppRegistryService {
 
         const name = row.name;
         const execPath = row.executable_path;
-        
-        // Extract executable filename without path and extension
         const execFilename = path.basename(execPath, path.extname(execPath));
 
-        logger.info(`Attempting window activation for: ${name} / ${execFilename}`);
+        logger.info(`Attempting window activation for app: ${name} / ${execFilename}`);
 
-        // Escape single quotes for PowerShell string literal
-        const escapedName = name.replace(/'/g, "''");
-        const escapedFilename = execFilename.replace(/'/g, "''");
+        // Try focusing the window using name or filename
+        const focused = await WindowManager.focusWindow([name, execFilename]);
+        if (focused) {
+          logger.info(`Focused existing window for app: ${name}`);
+          return resolve();
+        }
 
-        const psCommand = `$wshell = New-Object -ComObject WScript.Shell; if ($wshell.AppActivate('${escapedName}') -or $wshell.AppActivate('${escapedFilename}')) { echo "SUCCESS" } else { echo "FAIL" }`;
-        const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`;
+        logger.info(`App window not found or couldn't focus. Launching new instance: ${execPath}`);
+        const command = execPath.includes(' ') && !execPath.startsWith('"') ? `"${execPath}"` : execPath;
 
-        exec(fullCmd, (error, stdout) => {
-          if (!error && stdout && stdout.trim() === 'SUCCESS') {
-            logger.info(`Focused existing window for app: ${name}`);
-            return resolve();
+        exec(command, (launchError) => {
+          if (launchError) {
+            logger.error(`Error executing app ${execPath}:`, launchError);
+            return reject(launchError);
           }
-
-          logger.info(`App window not found or couldn't focus. Launching new instance: ${execPath}`);
-          const command = execPath.includes(' ') && !execPath.startsWith('"') ? `"${execPath}"` : execPath;
-
-          exec(command, (launchError) => {
-            if (launchError) {
-              logger.error(`Error executing app ${execPath}:`, launchError);
-              return reject(launchError);
-            }
-          });
-          resolve();
         });
+        resolve();
       } catch (error) {
         logger.error(`Exception during launching app ID ${id}:`, error);
         reject(error);

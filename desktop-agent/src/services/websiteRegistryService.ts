@@ -4,6 +4,7 @@ import { WebsiteShortcut } from '../types/launcher';
 import { openUrl } from '../utils/open';
 import crypto from 'crypto';
 import { exec } from 'child_process';
+import { WindowManager } from '../utils/windowManager';
 
 export class WebsiteRegistryService {
   public static getAllWebsites(): WebsiteShortcut[] {
@@ -74,26 +75,33 @@ export class WebsiteRegistryService {
 
         logger.info(`Attempting window activation for website: ${name}`);
 
-        // Escape single quotes for PowerShell string literal
-        const escapedName = name.replace(/'/g, "''");
-
-        const psCommand = `$wshell = New-Object -ComObject WScript.Shell; if ($wshell.AppActivate('${escapedName}')) { echo "SUCCESS" } else { echo "FAIL" }`;
-        const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psCommand}"`;
-
-        exec(fullCmd, async (error, stdout) => {
-          if (!error && stdout && stdout.trim() === 'SUCCESS') {
-            logger.info(`Focused existing browser window for website: ${name}`);
-            return resolve();
+        const keywords = [name];
+        try {
+          const parsedUrl = new URL(url);
+          const hostParts = parsedUrl.hostname.split('.');
+          for (const part of hostParts) {
+            const lowerPart = part.toLowerCase();
+            if (!['www', 'com', 'org', 'net', 'co', 'io', 'app', 'dev'].includes(lowerPart)) {
+              keywords.push(part);
+            }
           }
+        } catch (e) {
+          // Ignore URL parsing errors
+        }
 
-          logger.info(`Website window not found or couldn't focus. Opening URL in browser: ${url}`);
-          try {
-            await openUrl(url);
-            resolve();
-          } catch (openError) {
-            reject(openError);
-          }
-        });
+        const focused = await WindowManager.focusWindow(keywords);
+        if (focused) {
+          logger.info(`Focused existing browser window for website: ${name}`);
+          return resolve();
+        }
+
+        logger.info(`Website window not found or couldn't focus. Opening URL in browser: ${url}`);
+        try {
+          await openUrl(url);
+          resolve();
+        } catch (openError) {
+          reject(openError);
+        }
       } catch (error) {
         logger.error(`Exception during opening website ID ${id}:`, error);
         reject(error);
