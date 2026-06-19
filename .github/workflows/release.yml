@@ -68,10 +68,6 @@ jobs:
         working-directory: desktop-agent
         run: npm run build
 
-      - name: Build SQLite Native Binary
-        working-directory: desktop-agent
-        run: npx prebuild-install --target=22.0.0 --platform=win32 --arch=x64 --runtime=node
-
       - name: Compile Standalone Executable
         working-directory: desktop-agent
         run: npx @yao-pkg/pkg . --targets node22-win-x64 --output build/devdeck-agent.exe
