@@ -22,29 +22,29 @@ export class WindowManager {
       const psKeywordsArray = '@(' + cleanKeywords.map(k => `'${k}'`).join(', ') + ')';
 
       const psScript = `
-        $keywords = ${psKeywordsArray};
+        $keywords = ${psKeywordsArray}
         
         # Get all processes with main window titles
-        $processes = Get-Process | Where-Object { $_.MainWindowTitle -and $_.MainWindowHandle -ne [IntPtr]::Zero };
+        $processes = Get-Process | Where-Object { $_.MainWindowTitle -and $_.MainWindowHandle -ne [IntPtr]::Zero }
         
-        $targetProc = $null;
+        $targetProc = $null
         
         # Try matching by window title first (any of the keywords)
         foreach ($kw in $keywords) {
-          $match = $processes | Where-Object { $_.MainWindowTitle.ToLower().Contains($kw) } | Select-Object -First 1;
+          $match = $processes | Where-Object { $_.MainWindowTitle.ToLower().Contains($kw) } | Select-Object -First 1
           if ($match) {
-            $targetProc = $match;
-            break;
+            $targetProc = $match
+            break
           }
         }
         
         # If no window title match, try matching by process name
         if (-not $targetProc) {
           foreach ($kw in $keywords) {
-            $match = Get-Process | Where-Object { $_.ProcessName.ToLower().Contains($kw) -and $_.MainWindowHandle -ne [IntPtr]::Zero } | Select-Object -First 1;
+            $match = Get-Process | Where-Object { $_.ProcessName.ToLower().Contains($kw) -and $_.MainWindowHandle -ne [IntPtr]::Zero } | Select-Object -First 1
             if ($match) {
-              $targetProc = $match;
-              break;
+              $targetProc = $match
+              break
             }
           }
         }
@@ -58,21 +58,23 @@ export class WindowManager {
           [DllImport("user32.dll")]
           public static extern bool IsIconic(IntPtr hWnd);
 '@
-          $type = Add-Type -MemberDefinition $sig -Name "Win32Util" -Namespace "Win32" -PassThru -ErrorAction SilentlyContinue;
-          $hwnd = $targetProc.MainWindowHandle;
+          $type = Add-Type -MemberDefinition $sig -Name "Win32Util" -Namespace "Win32" -PassThru -ErrorAction SilentlyContinue
+          $hwnd = $targetProc.MainWindowHandle
           
           # If minimized, restore it
           if ([Win32.Win32Util]::IsIconic($hwnd)) {
-            [Win32.Win32Util]::ShowWindowAsync($hwnd, 9); # 9 = SW_RESTORE
+            [Win32.Win32Util]::ShowWindowAsync($hwnd, 9) # 9 = SW_RESTORE
           }
-          [Win32.Win32Util]::SetForegroundWindow($hwnd);
-          echo "SUCCESS";
+          [Win32.Win32Util]::SetForegroundWindow($hwnd)
+          Write-Output "SUCCESS"
         } else {
-          echo "FAIL";
+          Write-Output "FAIL"
         }
-      `.trim().replace(/\n/g, ' ');
+      `.trim();
 
-      const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psScript}"`;
+      // Encode the PowerShell script to UTF-16LE Base64 to safely execute complex/multiline code
+      const base64Script = Buffer.from(psScript, 'utf16le').toString('base64');
+      const fullCmd = `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${base64Script}`;
 
       exec(fullCmd, (error, stdout) => {
         if (!error && stdout && stdout.trim().includes('SUCCESS')) {
