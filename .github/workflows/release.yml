@@ -56,13 +56,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: desktop-agent/package-lock.json
 
       - name: Install Agent Dependencies
         working-directory: desktop-agent
-        run: npm install
+        run: npm ci
 
       - name: Compile TypeScript Agent
         working-directory: desktop-agent
