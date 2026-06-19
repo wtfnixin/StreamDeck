@@ -5,6 +5,7 @@ import { exec, execSync } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { WindowManager } from '../utils/windowManager';
 
 export class AppRegistryService {
   private static resolveExePath(exePath: string): string {
@@ -30,7 +31,7 @@ export class AppRegistryService {
     return exePath;
   }
 
-  private static extractExeIcon(exePath: string): string | null {
+  public static extractExeIcon(exePath: string): string | null {
     try {
       const resolved = this.resolveExePath(exePath);
       if (!fs.existsSync(resolved)) {
@@ -139,29 +140,36 @@ export class AppRegistryService {
   }
 
   public static launchApp(id: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
-        const row = db.prepare('SELECT executable_path FROM apps WHERE id = ?').get(id) as { executable_path: string } | undefined;
+        const row = db.prepare('SELECT name, executable_path FROM apps WHERE id = ?').get(id) as { name: string, executable_path: string } | undefined;
         if (!row) {
           logger.warn(`Attempted to launch app with unknown ID: ${id}`);
           return reject(new Error('App not found in registry'));
         }
 
+        const name = row.name;
         const execPath = row.executable_path;
-        logger.info(`Starting execution of app path: ${execPath}`);
-        
-        // Use double quotes for paths with spaces if necessary
+        const execFilename = path.basename(execPath, path.extname(execPath));
+
+        logger.info(`Attempting window activation for app: ${name} / ${execFilename}`);
+
+        // Try focusing the window using name or filename
+        const focused = await WindowManager.focusWindow([name, execFilename]);
+        if (focused) {
+          logger.info(`Focused existing window for app: ${name}`);
+          return resolve();
+        }
+
+        logger.info(`App window not found or couldn't focus. Launching new instance: ${execPath}`);
         const command = execPath.includes(' ') && !execPath.startsWith('"') ? `"${execPath}"` : execPath;
 
-        exec(command, (error) => {
-          if (error) {
-            logger.error(`Error executing app ${execPath}:`, error);
-            // Some apps close immediately or fork, but if it's a launch error we want to know
-            return reject(error);
+        exec(command, (launchError) => {
+          if (launchError) {
+            logger.error(`Error executing app ${execPath}:`, launchError);
+            return reject(launchError);
           }
         });
-        
-        // Resolve immediately as we only want to trigger the launch, not wait for the app to close
         resolve();
       } catch (error) {
         logger.error(`Exception during launching app ID ${id}:`, error);

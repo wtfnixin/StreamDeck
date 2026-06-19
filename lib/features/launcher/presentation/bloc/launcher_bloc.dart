@@ -7,6 +7,7 @@ import 'launcher_state.dart';
 
 class LauncherBloc extends Bloc<LauncherEvent, LauncherState> {
   final SocketService _socketService;
+  SocketService get socketService => _socketService;
 
   LauncherBloc(this._socketService) : super(LauncherInitial()) {
     on<LauncherLoadApps>(_onLoadApps);
