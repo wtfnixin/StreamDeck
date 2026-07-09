@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - version-1
     tags:
       - 'v*' # Triggers on release tags like v1.0.0
 

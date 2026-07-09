@@ -147,3 +147,20 @@ Source: "build\devdeck-agent.exe"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\DevDeck Agent"; Filename: "{app}\devdeck-agent.exe"
 Name: "{userstartup}\DevDeck Agent"; Filename: "{app}\devdeck-agent.exe"
 ```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Whether you want to fix a bug, add a new layout/macro action, or improve the documentation, feel free to dive in:
+
+1. **Fork the Repository**: Create your own copy of this project on GitHub.
+2. **Create a Feature Branch**:
+   ```bash
+   git checkout -b feature/amazing-new-feature
+   ```
+3. **Make Your Changes**: Commit clear, descriptive messages.
+4. **Submit a Pull Request**: Push your branch to GitHub and open a Pull Request against our `main` branch.
+
+*Once your pull request is reviewed and merged into `main`, our CI/CD pipeline will automatically run all tests, build the Android APK, package the Windows installer, and publish a new production-ready release!*
+
