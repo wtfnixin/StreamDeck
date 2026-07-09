@@ -232,11 +232,11 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
   Color _getKeyColor(DeckKeyType type) {
     switch (type) {
       case DeckKeyType.app:
-        return const Color(0xFF2979FF);
+        return const Color(0xFF6366F1); // Royal Indigo
       case DeckKeyType.website:
-        return const Color(0xFFEC407A);
+        return const Color(0xFFF59E0B); // Warm Amber Gold
       case DeckKeyType.workspace:
-        return const Color(0xFFAB47BC);
+        return const Color(0xFF10B981); // Emerald Mint
     }
   }
 
@@ -406,9 +406,9 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
     if (aspectRatio > 2.2) aspectRatio = 2.2;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0D11), // Matte black casing background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF13151B),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Stream Deck Board'),
         actions: [
@@ -430,48 +430,61 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      _isEditMode 
-                          ? 'Edit Mode: Add actions or tap keys to delete. Max 8.'
-                          : 'Tap to trigger actions. Max 8 actions.',
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 10,
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, // 4 columns (4x2 layout)
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: aspectRatio,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF080B11),
+              Color(0xFF0D121F),
+              Color(0xFF06090E),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _isEditMode 
+                            ? 'Edit Mode: Add actions or tap keys to delete. Max 8.'
+                            : 'Tap to trigger actions. Max 8 actions.',
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 10,
+                          letterSpacing: 0.5,
                         ),
-                        itemCount: itemCount,
-                        itemBuilder: (context, index) {
-                          if (showAddButton && index == displayKeys.length) {
-                            return _buildAddKeyButton();
-                          }
-                          return _buildStreamKey(displayKeys[index]);
-                        },
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4, // 4 columns (4x2 layout)
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: aspectRatio,
+                          ),
+                          itemCount: itemCount,
+                          itemBuilder: (context, index) {
+                            if (showAddButton && index == displayKeys.length) {
+                              return _buildAddKeyButton();
+                            }
+                            return _buildStreamKey(displayKeys[index]);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -479,19 +492,19 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
     switch (type) {
       case DeckKeyType.app:
         return const LinearGradient(
-          colors: [Color(0xFF2979FF), Color(0xFF1565C0)], // Glossy blue
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)], // Indigo gradient
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         );
       case DeckKeyType.website:
         return const LinearGradient(
-          colors: [Color(0xFFEC407A), Color(0xFFC2185B)], // Glossy magenta
+          colors: [Color(0xFFF59E0B), Color(0xFFD97706)], // Amber gradient
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         );
       case DeckKeyType.workspace:
         return const LinearGradient(
-          colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)], // Glossy violet
+          colors: [Color(0xFF10B981), Color(0xFF059669)], // Emerald gradient
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         );
@@ -521,47 +534,79 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      baseColor.withOpacity(0.25),
-                      baseColor.withOpacity(0.08),
+                      Colors.white.withOpacity(0.04),
+                      baseColor.withOpacity(0.02),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.22),
-                    width: 1.5,
+                    color: Colors.white.withOpacity(0.08),
+                    width: 1.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: baseColor.withOpacity(0.12),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
                   children: [
-                    _buildKeyIcon(key, Colors.white), // Centered small icon
-                    const SizedBox(height: 6),
-                    Text(
-                      key.name,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black38,
-                            offset: Offset(0, 1),
-                            blurRadius: 2,
+                    Positioned(
+                      top: 5,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 12,
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: baseColor.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: baseColor.withOpacity(0.5),
+                                blurRadius: 2,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 4),
+                            _buildKeyIcon(key, Colors.white), // Centered small icon
+                            const SizedBox(height: 6),
+                            Text(
+                              key.name,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black38,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

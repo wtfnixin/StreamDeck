@@ -34,7 +34,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0D11), // Matte OLED black background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -78,48 +78,61 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
-      body: BlocListener<ConnectionBloc, ConnectionBlocState>(
-        listener: (context, state) {
-          if (state.status == ConnectionStatus.connected) {
-            context.read<ClipboardBloc>().add(ClipboardStartSync());
-          } else {
-            context.read<ClipboardBloc>().add(ClipboardStopSync());
-          }
-        },
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Connection Status Card (breathing pulsing style)
-              const ConnectionStatusCard(),
-              const SizedBox(height: 18),
-
-              // 2. Live Clipboard Monitor Terminal
-              const ClipboardStatusCard(),
-              const SizedBox(height: 24),
-
-              // 3. Section Title: Console Hub
-              const Text(
-                'CONSOLE INTERFACES',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 4. Virtual Stream Deck Hero Panel
-              _buildStreamDeckHero(context),
-              const SizedBox(height: 18),
-
-              // 5. Category Launcher Modules List
-              _buildCategoryList(context),
-              const SizedBox(height: 32),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF080B11),
+              Color(0xFF0D121F),
+              Color(0xFF06090E),
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: BlocListener<ConnectionBloc, ConnectionBlocState>(
+          listener: (context, state) {
+            if (state.status == ConnectionStatus.connected) {
+              context.read<ClipboardBloc>().add(ClipboardStartSync());
+            } else {
+              context.read<ClipboardBloc>().add(ClipboardStopSync());
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Connection Status Card (breathing pulsing style)
+                const ConnectionStatusCard(),
+                const SizedBox(height: 18),
+    
+                // 2. Live Clipboard Monitor Terminal
+                const ClipboardStatusCard(),
+                const SizedBox(height: 24),
+    
+                // 3. Section Title: Console Hub
+                const Text(
+                  'CONSOLE INTERFACES',
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+    
+                // 4. Virtual Stream Deck Hero Panel
+                _buildStreamDeckHero(context),
+                const SizedBox(height: 18),
+    
+                // 5. Category Launcher Modules List
+                _buildCategoryList(context),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),
@@ -141,23 +154,22 @@ class _DashboardPageState extends State<DashboardPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF6366F1).withOpacity(0.22),
-                  const Color(0xFFAB47BC).withOpacity(0.08),
-                  Colors.white.withOpacity(0.02),
+                  Colors.white.withOpacity(0.04),
+                  const Color(0xFF6366F1).withOpacity(0.03),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFF6366F1).withOpacity(0.35),
-                width: 1.5,
+                color: const Color(0xFF6366F1).withOpacity(0.15),
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6366F1).withOpacity(0.12),
-                  blurRadius: 20,
-                  spreadRadius: 2,
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -169,10 +181,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   height: 72,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withOpacity(0.03),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withOpacity(0.08),
                       width: 1,
                     ),
                   ),
@@ -189,14 +201,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         decoration: BoxDecoration(
                           color: index == 4
                               ? const Color(0xFF6366F1).withOpacity(0.8)
-                              : Colors.white.withOpacity(0.15),
+                              : Colors.white.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(4),
-                          boxShadow: index == 4 ? [
-                            const BoxShadow(
-                              color: Color(0xFF6366F1),
-                              blurRadius: 4,
-                            )
-                          ] : null,
                         ),
                       );
                     },
@@ -210,15 +216,16 @@ class _DashboardPageState extends State<DashboardPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6366F1).withOpacity(0.15),
+                          color: const Color(0xFF6366F1).withOpacity(0.08),
                           borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.15)),
                         ),
                         child: const Text(
                           'PRIMARY CONSOLE',
                           style: TextStyle(
-                            color: Color(0xFF818CF8),
+                            color: Colors.white70,
                             fontSize: 9,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
                           ),
                         ),
@@ -246,7 +253,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
-                  color: Colors.white38,
+                  color: Colors.white30,
                   size: 20,
                 ),
               ],
@@ -260,15 +267,15 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: color),
+        Icon(icon, size: 16, color: color.withOpacity(0.85)),
         const SizedBox(width: 8),
         Text(
-          title,
+          title.toUpperCase(),
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 14,
+            fontSize: 11,
             fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
+            letterSpacing: 1.2,
           ),
         ),
       ],
@@ -279,50 +286,50 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSectionHeader('Quick App Launcher', Icons.rocket_launch_rounded, const Color(0xFF2979FF)),
+        _buildSectionHeader('Quick App Launcher', Icons.rocket_launch_rounded, const Color(0xFF6366F1)),
         const SizedBox(height: 8),
         _buildCategoryCard(
           context,
           title: 'App Shortcuts',
           subtitle: 'VS Code, Chrome, Terminal, etc.',
           icon: Icons.rocket_launch_rounded,
-          accentColor: const Color(0xFF2979FF),
+          accentColor: const Color(0xFF6366F1),
           route: '/apps',
         ),
         const SizedBox(height: 20),
 
-        _buildSectionHeader('Website Shortcuts', Icons.language_rounded, const Color(0xFFEC407A)),
+        _buildSectionHeader('Website Shortcuts', Icons.language_rounded, const Color(0xFFF59E0B)),
         const SizedBox(height: 8),
         _buildCategoryCard(
           context,
           title: 'URL Shortcuts',
           subtitle: 'GitHub, ChatGPT, Gmail, etc.',
           icon: Icons.language_rounded,
-          accentColor: const Color(0xFFEC407A),
+          accentColor: const Color(0xFFF59E0B),
           route: '/websites',
         ),
         const SizedBox(height: 20),
 
-        _buildSectionHeader('Workspace Profiles', Icons.workspaces_rounded, const Color(0xFFAB47BC)),
+        _buildSectionHeader('Workspace Profiles', Icons.workspaces_rounded, const Color(0xFF10B981)),
         const SizedBox(height: 8),
         _buildCategoryCard(
           context,
           title: 'Workspace Flows',
           subtitle: 'Full development environments',
           icon: Icons.workspaces_rounded,
-          accentColor: const Color(0xFFAB47BC),
+          accentColor: const Color(0xFF10B981),
           route: '/workspaces',
         ),
         const SizedBox(height: 20),
 
-        _buildSectionHeader('Gesture Controller Pad', Icons.gesture_rounded, const Color(0xFF00E5FF)),
+        _buildSectionHeader('Gesture Controller Pad', Icons.gesture_rounded, const Color(0xFF8B5CF6)),
         const SizedBox(height: 8),
         _buildCategoryCard(
           context,
           title: 'Interactive Gesture Pad',
           subtitle: 'Swipe or tap here to trigger desktop macros',
           icon: Icons.touch_app_rounded,
-          accentColor: const Color(0xFF00E5FF),
+          accentColor: const Color(0xFF8B5CF6),
           route: '/gesture-pad',
         ),
       ],
@@ -340,7 +347,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
         child: GestureDetector(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -351,8 +358,8 @@ class _DashboardPageState extends State<DashboardPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  accentColor.withOpacity(0.18),
-                  accentColor.withOpacity(0.04),
+                  Colors.white.withOpacity(0.04),
+                  accentColor.withOpacity(0.03),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -364,21 +371,25 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.04),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.15),
-                    shape: BoxShape.circle,
+                    color: accentColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: accentColor.withOpacity(0.15),
+                      width: 1,
+                    ),
                   ),
-                  child: Icon(icon, color: accentColor, size: 24),
+                  child: Icon(icon, color: accentColor.withOpacity(0.9), size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -548,18 +559,12 @@ class ConnectionStatusCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Theme.of(context).cardColor.withOpacity(0.8),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: statusColor.withOpacity(0.25),
-                  width: 1.5,
+                  color: Colors.white.withOpacity(0.06),
+                  width: 1.2,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: statusColor.withOpacity(0.04),
-                    blurRadius: 20,
-                  ),
-                ],
               ),
               child: Row(
                 children: [
@@ -567,9 +572,9 @@ class ConnectionStatusCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.12),
+                      color: Colors.white.withOpacity(0.05),
                       shape: BoxShape.circle,
-                      border: Border.all(color: statusColor.withOpacity(0.2), width: 1),
+                      border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
                     ),
                     child: status == ConnectionStatus.connecting
                         ? SizedBox(
@@ -660,9 +665,9 @@ class ClipboardStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF13151B), // Terminal black box
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -677,7 +682,7 @@ class ClipboardStatusCard extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: isSyncStopped ? Colors.redAccent : const Color(0xFF38BDF8),
+                          color: isSyncStopped ? Colors.redAccent : Theme.of(context).primaryColor,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -697,7 +702,7 @@ class ClipboardStatusCard extends StatelessWidget {
                   Text(
                     isSyncStopped ? 'SYNC DISABLED' : 'SYNC ACTIVE',
                     style: TextStyle(
-                      color: isSyncStopped ? Colors.redAccent.withOpacity(0.8) : const Color(0xFF38BDF8).withOpacity(0.8),
+                      color: isSyncStopped ? Colors.redAccent.withOpacity(0.8) : Theme.of(context).primaryColor.withOpacity(0.8),
                       fontFamily: 'monospace',
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -747,10 +752,10 @@ class ClipboardStatusCard extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: const Color(0xFF13151B),
+          backgroundColor: Theme.of(context).cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: const Color(0xFF38BDF8).withOpacity(0.2)),
+            side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.2)),
           ),
           content: Text(
             message,
@@ -777,12 +782,12 @@ class ClipboardStatusCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: accentColor),
+            Icon(icon, size: 14, color: Colors.white60),
             const SizedBox(width: 6),
             Text(
               title,
-              style: TextStyle(
-                color: accentColor.withOpacity(0.8),
+              style: const TextStyle(
+                color: Colors.white54,
                 fontFamily: 'monospace',
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -793,13 +798,14 @@ class ClipboardStatusCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.15),
+                  color: Colors.white.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
                 ),
                 child: const Text(
                   'SYNCED TO PC',
                   style: TextStyle(
-                    color: Color(0xFF818CF8),
+                    color: Colors.white70,
                     fontSize: 8,
                     fontWeight: FontWeight.bold,
                   ),
