@@ -64,16 +64,16 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
         final base64Str = app.icon!.split(',')[1];
         final bytes = base64Decode(base64Str);
         return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(14),
           child: Image.memory(
             bytes,
-            width: 28,
-            height: 28,
+            width: 44,
+            height: 44,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Icon(
               _getIconData(app.icon),
               color: Colors.white,
-              size: 28,
+              size: 44,
             ),
           ),
         );
@@ -94,16 +94,16 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
 
     if (brandIconUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(14),
         child: Image.network(
           brandIconUrl,
-          width: 28,
-          height: 28,
+          width: 44,
+          height: 44,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => Icon(
             _getIconData(app.icon),
             color: Colors.white,
-            size: 28,
+            size: 44,
           ),
         ),
       );
@@ -112,7 +112,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
     return Icon(
       _getIconData(app.icon),
       color: Colors.white,
-      size: 28,
+      size: 44,
     );
   }
 
@@ -246,7 +246,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
   Widget _buildAppKey(AppModel app) {
     final accentColor = const Color(0xFF6366F1); // Royal Indigo
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
         child: GestureDetector(
@@ -265,7 +265,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: Colors.white.withOpacity(0.08),
                 width: 1.0,
@@ -343,7 +343,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
 
   Widget _buildAddKeyButton() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: GestureDetector(
@@ -358,7 +358,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: Colors.white.withOpacity(0.12),
                 width: 1.5,

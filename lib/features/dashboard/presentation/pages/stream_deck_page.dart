@@ -279,22 +279,136 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
     }
   }
 
-  Widget _buildKeyIcon(DeckKey key, Color accentColor) {
+  BoxDecoration _getKeyCardDecoration(DeckKey key) {
+    final name = key.name.toLowerCase();
+    
+    if (name.contains('youtube')) {
+      return BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+      );
+    } else if (name.contains('instagram')) {
+      return BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFF9CE34),
+            Color(0xFFEE2A7B),
+            Color(0xFF6228D7),
+          ],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+        ),
+        borderRadius: BorderRadius.circular(26),
+      );
+    } else if (name.contains('github')) {
+      return BoxDecoration(
+        color: const Color(0xFF181717),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+      );
+    } else if (name.contains('google')) {
+      return BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+      );
+    } else if (name.contains('chatgpt') || name.contains('ai') || name.contains('openai')) {
+      return BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF10A37F),
+            Color(0xFF0F9B77),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(26),
+      );
+    } else if (name.contains('music') || name.contains('spotify')) {
+      return BoxDecoration(
+        color: const Color(0xFF1ED760),
+        borderRadius: BorderRadius.circular(26),
+      );
+    } else if (name.contains('hotstar')) {
+      return BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0F172A),
+            Color(0xFF1E293B),
+            Color(0xFF2563EB),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(26),
+      );
+    }
+    
+    // Default System/App key inner background:
+    // Slightly lighter/darker grey solid background
+    return BoxDecoration(
+      color: const Color(0xFF323238),
+      borderRadius: BorderRadius.circular(26),
+      border: Border.all(
+        color: Colors.white.withOpacity(0.04),
+        width: 1.0,
+      ),
+    );
+  }
+
+  Widget _buildKeyIcon(DeckKey key) {
+    final name = key.name.toLowerCase();
+    String? brandIconUrl;
+    if (name.contains('code') || name.contains('vs code') || name.contains('visual studio')) {
+      brandIconUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Visual_Studio_Code_1.35_icon.svg/128px-Visual_Studio_Code_1.35_icon.svg.png';
+    } else if (name.contains('chrome') || name.contains('browser')) {
+      brandIconUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/128px-Google_Chrome_icon_%28February_2022%29.svg.png';
+    }
+
+    if (brandIconUrl != null) {
+      return Center(
+        child: SizedBox(
+          width: 90,
+          height: 90,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.network(
+              brandIconUrl,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                _getIconData(key.iconName),
+                color: Colors.white,
+                size: 68,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (key.iconName.startsWith('data:image/')) {
       try {
         final base64Str = key.iconName.split(',')[1];
         final bytes = base64Decode(base64Str);
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.memory(
-            bytes,
-            width: 28,
-            height: 28,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Icon(
-              _getIconData(''),
-              color: Colors.white,
-              size: 28,
+        return Center(
+          child: SizedBox(
+            width: 92,
+            height: 92,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.contain, // Fit to container box cleanly
+                filterQuality: FilterQuality.medium, // Sharper scaling
+                isAntiAlias: true,
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(
+                    Icons.image_rounded,
+                    color: Colors.white,
+                    size: 68,
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -311,74 +425,59 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
         final domain = uri.host.isNotEmpty ? uri.host : key.payload;
         // Use the agent's favicon proxy to avoid CORS issues in Flutter web
         final agentBase = _socketService.agentBaseUrl ?? 'http://localhost:8080';
-        final faviconUrl = '$agentBase/favicon?domain=${Uri.encodeComponent(domain)}';
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.network(
-            faviconUrl,
-            width: 28, // Proportional icon size
-            height: 28,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.language_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return const SizedBox(
-                width: 28,
-                height: 28,
-                child: Center(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-                    ),
-                  ),
+        final faviconUrl = '$agentBase/favicon?domain=${Uri.encodeComponent(domain)}&v=1.3';
+        return Center(
+          child: SizedBox(
+            width: 90,
+            height: 90,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.network(
+                faviconUrl,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.language_rounded,
+                  color: Colors.white,
+                  size: 68,
                 ),
-              );
-            },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         );
       } catch (_) {}
-    } else if (key.type == DeckKeyType.app) {
-      final name = key.name.toLowerCase();
-      String? brandIconUrl;
-      if (name.contains('code') || name.contains('vs code') || name.contains('visual studio')) {
-        brandIconUrl = 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg';
-      } else if (name.contains('chrome') || name.contains('browser')) {
-        brandIconUrl = 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg';
-      } else if (name.contains('github')) {
-        brandIconUrl = 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg';
-      } else if (name.contains('terminal') || name.contains('bash') || name.contains('cmd') || name.contains('powershell')) {
-        brandIconUrl = 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg';
-      }
-
-      if (brandIconUrl != null) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.network(
-            brandIconUrl,
-            width: 28, // Proportional icon size
-            height: 28,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Icon(
-              _getIconData(key.iconName),
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        );
-      }
     }
 
-    return Icon(
-      _getIconData(key.iconName),
-      color: Colors.white, // Always white icon inside the screen
-      size: 28,
+    // Default icon from database/system
+    IconData iconData = _getIconData(key.iconName);
+    final lowerName = key.name.toLowerCase();
+    if (lowerName.contains('lock') || key.iconName.toLowerCase().contains('lock')) {
+      iconData = Icons.lock_outline_rounded;
+    } else if (lowerName.contains('record') || lowerName.contains('dot')) {
+      iconData = Icons.radio_button_checked_rounded;
+    } else if (lowerName.contains('window') || lowerName.contains('screen')) {
+      iconData = Icons.crop_portrait_rounded;
+    }
+
+    return Center(
+      child: Icon(
+        iconData,
+        color: Colors.white,
+        size: 68, // Large centered icon inside card
+      ),
     );
   }
 
@@ -393,228 +492,258 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     
     // Calculate aspect ratio dynamically so that the 4x2 grid fits perfectly in the available screen space.
-    // Deduct AppBar height (56), safe area, text height and margins/paddings (approx 70)
-    final availableHeight = screenHeight - kToolbarHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 70;
-    final availableWidth = screenWidth - 32; // horizontal padding (16 * 2)
+    final availableHeight = screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 60;
+    final availableWidth = screenWidth - 48; // padding 24 * 2
 
     // With 4 columns and 2 rows:
-    // aspectRatio = (availableWidth / 4) / (availableHeight / 2) = (availableWidth / 2) / availableHeight
     double aspectRatio = (availableWidth / 2) / (availableHeight > 0 ? availableHeight : 1);
     
-    // Clamp to a sane range to avoid extreme squishing
-    if (aspectRatio < 0.75) aspectRatio = 0.75;
-    if (aspectRatio > 2.2) aspectRatio = 2.2;
+    // Clamp to a range that keeps the keycaps looking squarish but responsive
+    if (aspectRatio < 0.8) aspectRatio = 0.8;
+    if (aspectRatio > 1.4) aspectRatio = 1.4;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Stream Deck Board'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isEditMode ? Icons.check_circle_rounded : Icons.edit_rounded,
-              color: _isEditMode ? Colors.greenAccent : Colors.white,
-            ),
-            tooltip: _isEditMode ? 'Done' : 'Edit Layout',
-            onPressed: () {
-              setState(() {
-                _isEditMode = !_isEditMode;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadAllKeys,
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF080B11),
-              Color(0xFF0D121F),
-              Color(0xFF06090E),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
-            : SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _isEditMode 
-                            ? 'Edit Mode: Add actions or tap keys to delete. Max 8.'
-                            : 'Tap to trigger actions. Max 8 actions.',
-                        style: const TextStyle(
-                          color: Colors.white38,
-                          fontSize: 10,
-                          letterSpacing: 0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4, // 4 columns (4x2 layout)
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: aspectRatio,
-                          ),
-                          itemCount: itemCount,
-                          itemBuilder: (context, index) {
-                            if (showAddButton && index == displayKeys.length) {
-                              return _buildAddKeyButton();
-                            }
-                            return _buildStreamKey(displayKeys[index]);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      backgroundColor: const Color(0xFF080B11),
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF080B11),
+                  Color(0xFF0D121F),
+                  Color(0xFF06090E),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-      ),
-    );
-  }
-
-  LinearGradient _getKeyGradient(DeckKeyType type) {
-    switch (type) {
-      case DeckKeyType.app:
-        return const LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)], // Indigo gradient
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        );
-      case DeckKeyType.website:
-        return const LinearGradient(
-          colors: [Color(0xFFF59E0B), Color(0xFFD97706)], // Amber gradient
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        );
-      case DeckKeyType.workspace:
-        return const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF059669)], // Emerald gradient
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        );
-    }
-  }
-
-
-  Widget _buildStreamKey(DeckKey key) {
-    final baseColor = _getKeyColor(key.type);
-    return Stack(
-      fit: StackFit.expand,
-      clipBehavior: Clip.none,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: GestureDetector(
-              onTap: () {
-                if (_isEditMode) {
-                  _deleteKey(key);
-                } else {
-                  _executeKey(key);
-                }
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.04),
-                      baseColor.withOpacity(0.02),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.08),
-                    width: 1.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 5,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          width: 12,
-                          height: 2,
-                          decoration: BoxDecoration(
-                            color: baseColor.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(1),
-                            boxShadow: [
-                              BoxShadow(
-                                color: baseColor.withOpacity(0.5),
-                                blurRadius: 2,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
+            ),
+          ),
+          
+          // Grid Content
+          _isLoading
+              ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+              : SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4, // 4 columns
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: aspectRatio,
+                            ),
+                            itemCount: itemCount,
+                            itemBuilder: (context, index) {
+                              if (showAddButton && index == displayKeys.length) {
+                                return _buildAddKeyButton();
+                              }
+                              return _buildStreamKey(displayKeys[index]);
+                            },
                           ),
                         ),
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                        child: Column(
+                        // Page indicators matching screenshot (just visual dots)
+                        const SizedBox(height: 8),
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 4),
-                            _buildKeyIcon(key, Colors.white), // Centered small icon
-                            const SizedBox(height: 6),
-                            Text(
-                              key.name,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
                                 color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black38,
-                                    offset: Offset(0, 1),
-                                    blurRadius: 2,
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(3),
                               ),
                             ),
                           ],
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+          // Floating back and edit overlays
+          Positioned(
+            top: 16,
+            left: 16,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => context.go('/dashboard'),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _loadAllKeys,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white70,
+                        size: 20,
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isEditMode = !_isEditMode;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isEditMode ? Icons.check_circle_rounded : Icons.edit_rounded,
+                        color: _isEditMode ? Colors.greenAccent : Colors.white70,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreamKey(DeckKey key) {
+    final name = key.name.toLowerCase();
+    final isYouTube = name.contains('youtube');
+    final isGoogle = name.contains('google');
+    final isGenericAction = name.contains('lock') || 
+                            name.contains('record') || 
+                            name.contains('mute') || 
+                            name.contains('volume') || 
+                            name.contains('brightness') || 
+                            name.contains('window') ||
+                            name.contains('screenshot') ||
+                            name.contains('camera') ||
+                            key.iconName.contains('lock') ||
+                            key.iconName.contains('record') ||
+                            key.iconName.contains('mic') ||
+                            key.iconName.contains('volume');
+    final showLabel = !isGenericAction;
+
+    return Stack(
+      fit: StackFit.expand,
+      clipBehavior: Clip.none,
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (_isEditMode) {
+              _deleteKey(key);
+            } else {
+              _executeKey(key);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(6.0), // Spacing/margin around the inner card for bezel effect
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B1D23), // Deep keycap bezel grey
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.04),
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Container(
+              decoration: _getKeyCardDecoration(key),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: Stack(
+                  children: [
+                    // Center Icon (fills background if it's an image, or centers in card if standard icon)
+                    Positioned.fill(
+                      child: _buildKeyIcon(key),
+                    ),
+                    
+                    // Top Label (Brand style)
+                    if (showLabel)
+                      Positioned(
+                        top: 8,
+                        left: 10,
+                        right: 10,
+                        child: Text(
+                          key.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isYouTube || isGoogle ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.7),
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
           ),
         ),
+        
+        // Delete overlay in Edit Mode
         if (_isEditMode)
           Positioned(
             top: -4,
@@ -647,29 +776,36 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
   }
 
   Widget _buildAddKeyButton() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-        child: GestureDetector(
-          onTap: () => _showAddActionSheet(context),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.08),
-                  Colors.white.withOpacity(0.02),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.12),
-                width: 1.5,
-              ),
+    return GestureDetector(
+      onTap: () => _showAddActionSheet(context),
+      child: Container(
+        padding: const EdgeInsets.all(6.0), // Spacing/margin around inner add key card
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B1D23), // Deep keycap bezel grey
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.04),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-            child: const Column(
+          ],
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF2D2D30).withOpacity(0.4),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.03),
+              width: 1.0,
+            ),
+          ),
+          child: const Center(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
@@ -677,12 +813,12 @@ class _StreamDeckPageState extends State<StreamDeckPage> {
                   color: Colors.white38,
                   size: 28,
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: 2),
                 Text(
                   'Add Key',
                   style: TextStyle(
                     color: Colors.white24,
-                    fontSize: 12,
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
