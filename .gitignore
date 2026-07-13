@@ -66,5 +66,6 @@ app.*.map.json
 /devdeck.db
 /devdeck.db-*
 /artifacts/
+/.agents/
 
 
