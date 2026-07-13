@@ -39,12 +39,68 @@ export class AppRegistryService {
       }
       
       const escapedPath = resolved.replace(/'/g, "''");
-      const psCommand = `Add-Type -AssemblyName System.Drawing; $icon = [System.Drawing.Icon]::ExtractAssociatedIcon('${escapedPath}'); $bitmap = $icon.ToBitmap(); $stream = New-Object System.IO.MemoryStream; $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png); $bytes = $stream.ToArray(); $base64 = [Convert]::ToBase64String($bytes); write-host $base64`;
+      const psCommand = `
+        Add-Type -AssemblyName System.Drawing
+        $code = @"
+        using System;
+        using System.Runtime.InteropServices;
+        using System.Drawing;
+        using System.IO;
+
+        public class IconExtractor {
+            [DllImport("user32.dll", CharSet = CharSet.Auto)]
+            public static extern uint PrivateExtractIcons(
+                string lpszFile,
+                int nIconIndex,
+                int cxIcon,
+                int cyIcon,
+                IntPtr[] phicon,
+                uint[] piconid,
+                uint nIcons,
+                uint flags
+            );
+
+            [DllImport("user32.dll")]
+            public static extern bool DestroyIcon(IntPtr hIcon);
+
+            public static string GetIconBase64(string filePath, int size) {
+                IntPtr[] phicon = new IntPtr[1];
+                uint[] piconid = new uint[1];
+                uint count = PrivateExtractIcons(filePath, 0, size, size, phicon, piconid, 1, 0);
+                if (count > 0 && phicon[0] != IntPtr.Zero) {
+                    try {
+                        using (Icon icon = Icon.FromHandle(phicon[0])) {
+                            using (Bitmap bitmap = icon.ToBitmap()) {
+                                using (MemoryStream stream = new MemoryStream()) {
+                                    bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                                    return Convert.ToBase64String(stream.ToArray());
+                                }
+                            }
+                        }
+                    } finally {
+                        DestroyIcon(phicon[0]);
+                    }
+                }
+                return null;
+            }
+        }
+"@
+        Add-Type -TypeDefinition $code -ReferencedAssemblies "System.Drawing" -ErrorAction SilentlyContinue
+        [IconExtractor]::GetIconBase64('${escapedPath}', 128)
+      `;
+
+      const buffer = Buffer.from(psCommand, 'utf16le');
+      const base64Encoded = buffer.toString('base64');
       
-      const base64 = execSync(`powershell -Command "${psCommand.replace(/"/g, '\\"')}"`, { 
+      let base64 = execSync(`powershell -NoProfile -NonInteractive -EncodedCommand ${base64Encoded}`, { 
         encoding: 'utf8', 
         maxBuffer: 1024 * 1024 * 10 
       }).trim();
+      
+      if (base64.includes('#< CLIXML')) {
+        const parts = base64.split('</Objs>');
+        base64 = parts[parts.length - 1].trim();
+      }
       
       if (base64 && base64.startsWith('iVBORw0KGgo')) {
         return `data:image/png;base64,${base64}`;

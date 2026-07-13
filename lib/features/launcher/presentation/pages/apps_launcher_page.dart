@@ -64,16 +64,16 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
         final base64Str = app.icon!.split(',')[1];
         final bytes = base64Decode(base64Str);
         return ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(14),
           child: Image.memory(
             bytes,
-            width: 28,
-            height: 28,
+            width: 44,
+            height: 44,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) => Icon(
               _getIconData(app.icon),
               color: Colors.white,
-              size: 28,
+              size: 44,
             ),
           ),
         );
@@ -94,16 +94,16 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
 
     if (brandIconUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(14),
         child: Image.network(
           brandIconUrl,
-          width: 28,
-          height: 28,
+          width: 44,
+          height: 44,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => Icon(
             _getIconData(app.icon),
             color: Colors.white,
-            size: 28,
+            size: 44,
           ),
         ),
       );
@@ -112,16 +112,16 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
     return Icon(
       _getIconData(app.icon),
       color: Colors.white,
-      size: 28,
+      size: 44,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0D11), // Matte black background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF13151B),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Quick App Launcher'),
         leading: IconButton(
@@ -129,49 +129,62 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
           onPressed: () => context.go('/dashboard'),
         ),
       ),
-      body: BlocConsumer<LauncherBloc, LauncherState>(
-        listener: (context, state) {
-          if (state is LauncherFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is LauncherLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              ),
-            );
-          } else if (state is LauncherAppsLoaded) {
-            final apps = state.apps;
-            return _buildContent(apps);
-          } else if (state is LauncherFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 60, color: Colors.redAccent),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load apps',
-                    style: TextStyle(fontSize: 18, color: AppTheme.textPrimary.withOpacity(0.9), fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => context.read<LauncherBloc>().add(LauncherLoadApps()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF080B11),
+              Color(0xFF0D121F),
+              Color(0xFF06090E),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: BlocConsumer<LauncherBloc, LauncherState>(
+          listener: (context, state) {
+            if (state is LauncherFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is LauncherLoading) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                ),
+              );
+            } else if (state is LauncherAppsLoaded) {
+              final apps = state.apps;
+              return _buildContent(apps);
+            } else if (state is LauncherFailure) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 60, color: Colors.redAccent),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load apps',
+                      style: TextStyle(fontSize: 18, color: AppTheme.textPrimary.withOpacity(0.9), fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => context.read<LauncherBloc>().add(LauncherLoadApps()),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -231,13 +244,14 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
   }
 
   Widget _buildAppKey(AppModel app) {
-    const baseColor = Color(0xFF2979FF); // Blue tint
+    final accentColor = const Color(0xFF6366F1); // Royal Indigo
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
         child: GestureDetector(
           onTap: () {
+            HapticFeedback.lightImpact();
             context.read<LauncherBloc>().add(LauncherLaunchApp(app.id));
           },
           onLongPress: () => _showDeleteConfirmation(app),
@@ -245,47 +259,78 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  baseColor.withOpacity(0.25),
-                  baseColor.withOpacity(0.08),
+                  Colors.white.withOpacity(0.04),
+                  accentColor.withOpacity(0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(0.22),
-                width: 1.5,
+                color: Colors.white.withOpacity(0.08),
+                width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: baseColor.withOpacity(0.12),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
               children: [
-                _buildAppIcon(app),
-                const SizedBox(height: 6),
-                Text(
-                  app.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black38,
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
+                Positioned(
+                  top: 5,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      width: 12,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.5),
+                            blurRadius: 2,
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildAppIcon(app),
+                        const SizedBox(height: 6),
+                        Text(
+                          app.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -298,7 +343,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
 
   Widget _buildAddKeyButton() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: GestureDetector(
@@ -313,7 +358,7 @@ class _AppsLauncherPageState extends State<AppsLauncherPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: Colors.white.withOpacity(0.12),
                 width: 1.5,

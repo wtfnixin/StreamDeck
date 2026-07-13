@@ -57,6 +57,32 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
   }
 
   Widget _buildWebIcon(WebsiteModel web) {
+    final name = web.name.toLowerCase();
+    String? brandIconUrl;
+    if (name.contains('code') || name.contains('vs code') || name.contains('visual studio')) {
+      brandIconUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Visual_Studio_Code_1.35_icon.svg/128px-Visual_Studio_Code_1.35_icon.svg.png';
+    } else if (name.contains('chrome') || name.contains('browser')) {
+      brandIconUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Chrome_icon_%28February_2022%29.svg/128px-Google_Chrome_icon_%28February_2022%29.svg.png';
+    }
+
+    if (brandIconUrl != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.network(
+          brandIconUrl,
+          width: 44,
+          height: 44,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (context, error, stackTrace) => Icon(
+            _getIconData(web.icon),
+            color: Colors.white,
+            size: 44,
+          ),
+        ),
+      );
+    }
+
     try {
       String url = web.url;
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -66,30 +92,30 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
       final domain = uri.host.isNotEmpty ? uri.host : web.url;
       // Use the agent's favicon proxy to avoid CORS issues in Flutter web
       final agentBase = _socketService.agentBaseUrl ?? 'http://localhost:8080';
-      final faviconUrl = '$agentBase/favicon?domain=${Uri.encodeComponent(domain)}';
+      final faviconUrl = '$agentBase/favicon?domain=${Uri.encodeComponent(domain)}&v=1.3';
       return ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(14),
         child: Image.network(
           faviconUrl,
-          width: 28,
-          height: 28,
+          width: 44,
+          height: 44,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) => const Icon(
             Icons.language_rounded,
             color: Colors.white,
-            size: 28,
+            size: 44,
           ),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return const SizedBox(
-              width: 28,
-              height: 28,
+              width: 44,
+              height: 44,
               child: Center(
                 child: SizedBox(
-                  width: 14,
-                  height: 14,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
+                    strokeWidth: 2.0,
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
                   ),
                 ),
@@ -103,16 +129,16 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
     return Icon(
       _getIconData(web.icon),
       color: Colors.white,
-      size: 28,
+      size: 44,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0D11), // Matte black background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF13151B),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('Website Shortcuts'),
         leading: IconButton(
@@ -120,49 +146,62 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
           onPressed: () => context.go('/dashboard'),
         ),
       ),
-      body: BlocConsumer<LauncherBloc, LauncherState>(
-        listener: (context, state) {
-          if (state is LauncherFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is LauncherLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              ),
-            );
-          } else if (state is LauncherWebsitesLoaded) {
-            final websites = state.websites;
-            return _buildContent(websites);
-          } else if (state is LauncherFailure) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline_rounded, size: 60, color: Colors.redAccent),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load websites',
-                    style: TextStyle(fontSize: 18, color: AppTheme.textPrimary.withOpacity(0.9), fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => context.read<LauncherBloc>().add(LauncherLoadWebsites()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF080B11),
+              Color(0xFF0D121F),
+              Color(0xFF06090E),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: BlocConsumer<LauncherBloc, LauncherState>(
+          listener: (context, state) {
+            if (state is LauncherFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state is LauncherLoading) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                ),
+              );
+            } else if (state is LauncherWebsitesLoaded) {
+              final websites = state.websites;
+              return _buildContent(websites);
+            } else if (state is LauncherFailure) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 60, color: Colors.redAccent),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load websites',
+                      style: TextStyle(fontSize: 18, color: AppTheme.textPrimary.withOpacity(0.9), fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => context.read<LauncherBloc>().add(LauncherLoadWebsites()),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -222,13 +261,14 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
   }
 
   Widget _buildWebsiteKey(WebsiteModel web) {
-    const baseColor = Color(0xFFEC407A); // Magenta tint
+    final accentColor = const Color(0xFFF59E0B); // Warm Amber Gold
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
         child: GestureDetector(
           onTap: () {
+            HapticFeedback.lightImpact();
             context.read<LauncherBloc>().add(LauncherLaunchWebsite(web.id));
           },
           onLongPress: () => _showDeleteConfirmation(web),
@@ -236,47 +276,78 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  baseColor.withOpacity(0.25),
-                  baseColor.withOpacity(0.08),
+                  Colors.white.withOpacity(0.04),
+                  accentColor.withOpacity(0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(0.22),
-                width: 1.5,
+                color: Colors.white.withOpacity(0.08),
+                width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: baseColor.withOpacity(0.12),
-                  blurRadius: 8,
-                  spreadRadius: 1,
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
               children: [
-                _buildWebIcon(web),
-                const SizedBox(height: 6),
-                Text(
-                  web.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black38,
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
+                Positioned(
+                  top: 5,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      width: 12,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.5),
+                            blurRadius: 2,
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildWebIcon(web),
+                        const SizedBox(height: 6),
+                        Text(
+                          web.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(0, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -289,7 +360,7 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
 
   Widget _buildAddKeyButton() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
         child: GestureDetector(
@@ -304,7 +375,7 @@ class _WebsitesLauncherPageState extends State<WebsitesLauncherPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: Colors.white.withOpacity(0.12),
                 width: 1.5,

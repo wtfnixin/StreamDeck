@@ -62,4 +62,10 @@ app.*.map.json
 *.db-shm
 *.db-wal
 
+# Root-level ignore of local database and logs
+/devdeck.db
+/devdeck.db-*
+/artifacts/
+/.agents/
+
 

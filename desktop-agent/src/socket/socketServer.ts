@@ -17,7 +17,14 @@ function proxyFavicon(domain: string, res: http.ServerResponse, currentUrl?: str
     return;
   }
 
-  const url = currentUrl || `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}`;
+  let url = currentUrl;
+  if (!url) {
+    if (domain.toLowerCase().includes('github.com')) {
+      url = 'https://github.githubassets.com/apple-touch-icon.png';
+    } else {
+      url = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+    }
+  }
 
   https.get(url, (upstreamRes) => {
     const statusCode = upstreamRes.statusCode || 200;
